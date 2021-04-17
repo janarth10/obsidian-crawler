@@ -1,8 +1,19 @@
+import datetime
 import requests
+
 import bs4
 from markdownify import markdownify
 
 OBSIDIAN_DIR = '/Users/newdev/Documents/janarth-vault/crawler'
+LOG_FILE = '/Users/newdev/Hive/Development/personal_projects/obsidian-crawler/error-log.txt'
+
+
+def write_to_logs(message=''):
+    with open(LOG_FILE, 'a') as log:
+        log.write('\n\n')
+        log.write(f"Logging new message at { datetime.datetime.now().strftime('%c') }")
+        log.write('\n')
+        log.write(message)
 
 
 def download_hive_blog_post_to_md_file(url):
