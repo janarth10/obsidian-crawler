@@ -24,11 +24,19 @@ def download_hive_blog_post_to_md_file(url):
     file_name = f"{soup.find('title').text}.md"
     file_path = f"{OBSIDIAN_DIR}/{file_name}"
 
-    # JPTODO should check if this file exists already. bc if it does
-    #   idw append more content to it
-    with open(file_path, 'a') as f:
-        blog_content_div = soup.find("div", "post-content__inner")
-        for html_tag in blog_content_div:
-            f.write(markdownify(str(html_tag), heading_style="ATX"))
+    try:
+        """
+         'x' option ensures file doesn't already exist
+
+         However, this will be a problem if a post receives an update, bc the program
+         will ignore downloading again
+        """
+        with open(file_path, 'x') as f:
+            blog_content_div = soup.find("div", "post-content__inner")
+            for html_tag in blog_content_div:
+                f.write(markdownify(str(html_tag), heading_style="ATX"))
+    except FileExistsError as e:
+        write_to_logs(message=f"Tried to download {url}. Already exists.")
+
 
 download_hive_blog_post_to_md_file(url='https://blog.hive.co/50-ecommerce-subject-lines-to-drive-higher-revenue-this-easter-long-weekend/')
