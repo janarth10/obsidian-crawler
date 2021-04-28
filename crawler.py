@@ -22,7 +22,11 @@ def download_hive_blog_post_to_md_file(url):
         return
 
     request = requests.get(url)
-    request.raise_for_status()
+	try:
+	    request.raise_for_status()
+	except Exception as e:
+		write_to_logs(message=e.message)
+		return
 
     soup = bs4.BeautifulSoup(request.text, "html.parser")
     file_name = f"{soup.find('title').text}.md"
@@ -59,22 +63,38 @@ def download_hive_blog_post_to_md_file(url):
     return file_name
 
 
-download_hive_blog_post_to_md_file(url='https://blog.hive.co/50-ecommerce-subject-lines-to-drive-higher-revenue-this-easter-long-weekend/')
+def download_hive_blogs_from_card_list_view(reponse):
+	soup = bs4.BeautifulSoup(response.text, 'html.parser')
+	
+	"""
+	    sanity check
+	        - soup.select('a.js-fadein')
+	        - soup.select('h2.post-card__title')
+	    returned 9 results when on first page. assuming that this will find all blog posts
+	"""
+	links = soup.select('a.js-fadein') or soup.select('h2.post-card__title')
+	for link in links:
+	    link_str = link.get('href')
+	    if 'blog.hive.co' not in link.get('href'):
+	        link_str = f"https://blog.hive.co{link_str}"
+	    download_hive_blog_post_to_md_file(url=link_str)
+	
+# __main__	
+start_urls = [
+	'https://blog.hive.co/tag/email-design/',
+	'https://blog.hive.co/tag/email-marketing/',
+	'https://blog.hive.co/tag/ecommerce-email/',
+	'https://blog.hive.co/tag/seasonal/',
+]
 
-
-# def bfs_crawl():
-#     """
-#         Using breadth first search to download all blog posts in the Hive Blog "graph"
-
-#         TODO
-#         - where to start? Is there a way to get a list of all articles? If so don't need to BFS
-#         - need to replace "markdownify(str(a_tag), heading_style="ATX")" with [[<filename>]]. so that my
-#             obsidian files link to eachother
-#     """
-
-#     # for fucks just want to pseudo the BFS algo
-
-#     urls_queue = []
-#     for post_url in urls_queue:
-#         # define this fn within 'bfs_crawl' so that it can add new urls to que
-#         download_hive_blog_post_to_md_file(post_url)
+page_num = 0
+while page_num < 15:
+	resp = requests.get(f"{start_urls[0]}page/{page_num}")
+	try:
+		resp.raise_for_status()
+	except Exception as e:
+		write_to_logs(message='Did we get to end of pages??')
+		write_to_logs(message=e.message)
+		break
+	download_hive_blogs_from_card_list_view(reponse=resp)
+	
